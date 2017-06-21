@@ -26,10 +26,14 @@ import com.github.kittinunf.fuel.core.FuelError;
 import com.github.kittinunf.fuel.core.Handler;
 import com.github.kittinunf.fuel.core.Request;
 import com.github.kittinunf.fuel.core.Response;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.RequestParams;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,6 +41,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URL;
 
+import cz.msebera.android.httpclient.Header;
 import kotlin.jvm.functions.Function2;
 
 
@@ -56,7 +61,7 @@ public class MainActivity extends Activity   {
 
         try{
 
-            File f = File.createTempFile("tmp","bmp");
+            File f = File.createTempFile("tmp",".jpg");
             OutputStream outputStream = new FileOutputStream(f);
             byte buffer[] = new byte[1024];
             int length = 0;
@@ -121,54 +126,49 @@ public class MainActivity extends Activity   {
 
 
 
+        InputStream is = null;
 
-        Fuel.upload("http://10.0.2.2:5000/upload2").timeout(1000).source(new Function2<Request, URL, File>() {
-            @Override
-            public File invoke(Request request, URL url) {
+        try {
+            is  = getAssets().open("2.jpg");
+
+        } catch (IOException e) {
+            Log.d(TAG,"no file????");
+            e.printStackTrace();
+        }
+        RequestParams params = new RequestParams();
+
+        try {
 
 
-                InputStream is = null;
+            params.put("file", createFileFromInputStream(is) );
+            //params.put("uploaded_file", createFileFromInputStream(is));
 
-                try {
-                    is  = getAssets().open("flower3.bmp");
+            AsyncHttpClient client = new AsyncHttpClient();
 
-                } catch (IOException e) {
-                    Log.d(TAG,"no file????");
-                    e.printStackTrace();
+            client.post("http://10.0.2.2:5000/upload", params, new AsyncHttpResponseHandler() {
+
+
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                    Log.d(TAG,"post success");
+                    Log.d(TAG, String.valueOf(responseBody));
+
                 }
 
-
-                Log.d(TAG,"invoked request");
-                if (is == null)
-                    Log.d(TAG,"bad stream :(");
-                Log.d(TAG, request.toString());
-
-
-                return createFileFromInputStream(is);
+                @Override
+                public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                    Log.d(TAG,"post failure");
+                    Log.d(TAG, String.valueOf(statusCode));
+                    Log.d(TAG, String.valueOf(responseBody));
 
 
+                }
+            }) ;
 
 
-            }
-        }).responseString(new Handler<String>() {
-
-
-
-            @Override
-            public void failure(@NotNull Request request, @NotNull Response response, @NotNull FuelError error) {
-                //updateUI(error, null);
-                Log.d(TAG,"upload failure");
-                Log.d(TAG, request.toString());
-                Log.d(TAG, response.toString());
-                Log.d(TAG, error.toString());
-            }
-
-            @Override
-            public void success(@NotNull Request request, @NotNull Response response, String data) {
-                //updateUI(null, data);
-                Log.d(TAG,"upload success");
-            }
-        });
+        } catch(FileNotFoundException e) {
+            Log.d(TAG,"bad bad bad") ;
+        }
 
 
 
