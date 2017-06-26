@@ -57,34 +57,6 @@ public class MainActivity extends Activity   {
 
 
 
-    private File createFileFromInputStream(InputStream inputStream) {
-
-        try{
-
-            File f = File.createTempFile("tmp",".jpg");
-            OutputStream outputStream = new FileOutputStream(f);
-            byte buffer[] = new byte[1024];
-            int length = 0;
-
-            while((length=inputStream.read(buffer)) > 0) {
-                outputStream.write(buffer,0,length);
-            }
-
-            outputStream.close();
-            inputStream.close();
-
-            Log.d(TAG,"file is ready");
-
-            return f;
-        }catch (IOException e) {
-            Log.d(TAG,"cant convert stream to file");
-            e.printStackTrace();
-            //Logging exception
-        }
-        Log.d(TAG,"no file blat") ;
-        return null;
-    }
-
 
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -118,14 +90,7 @@ public class MainActivity extends Activity   {
 
         /// remove this later ...
 
-
-
-      //  Bitmap bmp = getBitmapFromAsset(this.getApplicationContext()  ,"flower3.bmp");
-        Log.d(TAG,"upload file");
-
-
-
-
+        ImageUploader uploader = new ImageUploader();
         InputStream is = null;
 
         try {
@@ -135,45 +100,12 @@ public class MainActivity extends Activity   {
             Log.d(TAG,"no file????");
             e.printStackTrace();
         }
-        RequestParams params = new RequestParams();
 
-        try {
-
-
-            params.put("file", createFileFromInputStream(is) );
-            //params.put("uploaded_file", createFileFromInputStream(is));
-
-            AsyncHttpClient client = new AsyncHttpClient();
-
-            client.post("http://10.0.2.2:5000/upload", params, new AsyncHttpResponseHandler() {
-
-
-                @Override
-                public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-                    Log.d(TAG,"post success");
-                    Log.d(TAG, String.valueOf(responseBody));
-
-                }
-
-                @Override
-                public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                    Log.d(TAG,"post failure");
-                    Log.d(TAG, String.valueOf(statusCode));
-                    Log.d(TAG, String.valueOf(responseBody));
-
-
-                }
-            }) ;
-
-
-        } catch(FileNotFoundException e) {
-            Log.d(TAG,"bad bad bad") ;
-        }
-
-
-
+        uploader.uploadImage(uploader.createFileFromInputStream(is));
 
     }
+
+
     protected void onPause()
     {
         if ( camPreview != null)
@@ -182,21 +114,6 @@ public class MainActivity extends Activity   {
     }
 
 
-
-    public static Bitmap getBitmapFromAsset(Context context, String filePath) {
-        AssetManager assetManager = context.getAssets();
-
-        InputStream istr;
-        Bitmap bitmap = null;
-        try {
-            istr = assetManager.open(filePath);
-            bitmap = BitmapFactory.decodeStream(istr);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return bitmap;
-    }
 
 
 
